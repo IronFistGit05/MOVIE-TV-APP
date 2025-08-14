@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Movie Pulse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="logo">MP</div>
+        <div>
+          <h1>Movie Pulse</h1>
+          <div class="muted">Feel the heartbeat of cinema!</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <input id="search" type="search" placeholder="Search movies or TV shows..." />
+        <select id="mediaType">
+          <option value="movie">Movies</option>
+          <option value="tv">TV Shows</option>
+        </select>
+        <select id="genreSelect"><option value="">All genres</option></select>
+        <button id="clear">Clear</button>
+      </div>
+    </header>
+
+    <body>
+        <h1>Popular Movies</h1>
+        <div id="movie-container" class="movies-grid"></div>
+        <script src="script.js"></script>
+    </body>
+
+    <main>
+      <section id="results" class="grid"></section>
+      <div class="pagination" id="pagination"></div>
+    </main>
+
+    <div class="modal" id="modal">
+      <div class="modal-card" role="dialog" aria-modal="true">
+        <button id="closeModal" style="float:right">Close ✕</button>
+        <div class="modal-top">
+          <img id="modalPoster" class="backdrop" src="" alt="poster" />
+          <div class="modal-body">
+            <h2 id="modalTitle"></h2>
+            <div id="modalTagline" class="muted"></div>
+            <p id="modalOverview"></p>
+            <div class="meta" style="margin-top:8px">
+              <div id="modalInfo" class="muted"></div>
+              <div id="modalRating"></div>
+            </div>
+            <div class="videos" id="modalVideos" style="margin-top:12px"></div>
+            <h3 style="margin-top:12px">Similar</h3>
+            <div id="modalSimilar" class="similar"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  /*
+    Quick setup notes:
+    1) Get an API key from https://developers.themoviedb.org/ (TMDB).
+    2) For production, do NOT expose the API key in client-side JS. Create a small server endpoint
+       (example commented below) which stores your key and proxies requests.
+  */
+
+  const API_KEY = '60c7adcff566c19c283f58cfcb3ba4b6'; // <-- replace this with your key for local testing
+  const API_BASE = 'https://api.themoviedb.org/3';
+  const IMG_BASE = 'https://image.tmdb.org/t/p/w500';
+
+  // App state
+  let currentPage = 1;
+  let totalPages = 1;
+  let currentQuery = '';
+  let currentGenre = '';
+  let currentMedia = 'movie';
+
+  // DOM
+  const searchEl = document.getElementById('search');
+  const resultsEl = document.getElementById('results');
+  const paginationEl = document.getElementById('pagination');
+  const genreSelect = document.getElementById('genreSelect');
+  const mediaTypeSelect = document.getElementById('mediaType');
+  const clearBtn = document.getElementById('clear');
+
+  // Modal
+  const modal = document.getElementById('modal');
+  const closeModal = document.getElementById('closeModal');
+  const modalPoster = document.getElementById('modalPoster');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalOverview = document.getElementById('modalOverview');
+  const modalTagline = document.getElementById('modalTagline');
+  const modalInfo = document.getElementById('modalInfo');
+  const modalRating = document.getElementById('modalRating');
+  const modalVideos = document.getElementById('modalVideos');
+  const modalSimilar = document.getElementById('modalSimilar');
+
+  // Helpers
+  function qs(url){
+    const u = new URL(url);
+    u.searchParams.set('api_key', API_KEY);
+    return u.toString();
+  }
+
+  async function fetchJSON(path, params = {}){
+    const url = new URL(API_BASE + path);
+    Object.entries(params).forEach(([k,v])=>{ if(v !== '' && v !== null) url.searchParams.set(k,v) });
+    url.searchParams.set('api_key', API_KEY);
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('Network error');
+    return res.json();
+  }
+
+  // Load genres for selected media type
+  async function loadGenres(media='movie'){
+    try{
+      const data = await fetchJSON(`/genre/${media}/list`, {language: 'en-US'});
+      genreSelect.innerHTML = '<option value="">All genres</option>' + data.genres.map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
+    }catch(e){ console.error('Genres load failed', e); }
+  }
+
+  // Search or discover movies
+  async function loadResults(page=1){
+    currentPage = page;
+    resultsEl.innerHTML = '<div class="muted pill">Loading…</div>';
+    try{
+      let data;
+      if(currentQuery){
+        data = await fetchJSON(`/search/${currentMedia}`, {query: currentQuery, page, include_adult: false, language: 'en-US'});
+      } else {
+        // discover with optional genre filter
+        data = await fetchJSON('/discover/' + currentMedia, {page, with_genres: currentGenre || undefined, language: 'en-US', sort_by: 'popularity.desc'});
+      }
+      totalPages = data.total_pages;
+      renderResults(data.results || []);
+      renderPagination();
+    }catch(e){
+      resultsEl.innerHTML = '<div class="muted">Failed to load results</div>';
+      console.error(e);
+    }
+  }
+
+  function renderResults(items){
+    if(!items.length){ resultsEl.innerHTML = '<div class="muted">No results found</div>'; return }
+    resultsEl.innerHTML = items.map(it=>{
+      const title = it.title || it.name || 'Untitled';
+      const poster = it.poster_path ? IMG_BASE + it.poster_path : '';
+      const release = it.release_date || it.first_air_date || '';
+      const rating = it.vote_average ? (it.vote_average.toFixed(1)) : '—';
+      return `
+        <article class="card" data-id="${it.id}" data-media="${currentMedia}">
+          <img class="poster" loading="lazy" src="${poster}" alt="${title}" />
+          <div class="title">${title}</div>
+          <div class="muted">${release}</div>
+          <div class="meta"><div class="muted">${it.genre_ids ? it.genre_ids.join(',') : ''}</div><div class="pill">⭐ ${rating}</div></div>
+        </article>
+      `
+    }).join('');
+
+    // wire up click handlers
+    resultsEl.querySelectorAll('.card').forEach(card=>{
+      card.addEventListener('click', ()=> openDetails(card.dataset.media, card.dataset.id));
+    });
+  }
+
+  function renderPagination(){
+    const pagesToShow = 5;
+    const start = Math.max(1, currentPage - Math.floor(pagesToShow/2));
+    let end = Math.min(totalPages, start + pagesToShow -1);
+    if(end - start < pagesToShow -1) start = Math.max(1, end - pagesToShow +1);
+
+    let html = '';
+    if(currentPage > 1) html += `<button class="pill" data-page="${currentPage-1}">Prev</button>`;
+    for(let p = start; p <= end; p++){
+      html += `<button class="pill" data-page="${p}" style="${p===currentPage? 'outline:2px solid var(--accent);' : ''}">${p}</button>`;
+    }
+    if(currentPage < totalPages) html += `<button class="pill" data-page="${currentPage+1}">Next</button>`;
+    paginationEl.innerHTML = html;
+    paginationEl.querySelectorAll('button').forEach(b=> b.addEventListener('click', ()=> loadResults(Number(b.dataset.page))));
+  }
+
+  // Open details modal
+  async function openDetails(media, id){
+    try{
+      modal.classList.add('open');
+      modalVideos.innerHTML = '';
+      modalSimilar.innerHTML = '';
+      modalPoster.src = '';
+      modalTitle.textContent = 'Loading…';
+      const details = await fetchJSON(`/${media}/${id}`, {language: 'en-US'});
+      const videos = await fetchJSON(`/${media}/${id}/videos`, {language: 'en-US'});
+      const similar = await fetchJSON(`/${media}/${id}/similar`, {language: 'en-US', page:1});
+
+      modalPoster.src = details.poster_path ? IMG_BASE + details.poster_path : '';
+      modalTitle.textContent = details.title || details.name || 'Untitled';
+      modalTagline.textContent = details.tagline || '';
+      modalOverview.textContent = details.overview || 'No overview.';
+      modalInfo.textContent = `${details.status || ''} • ${details.release_date || details.first_air_date || ''} • ${details.runtime ? details.runtime + 'm' : ''}`;
+      modalRating.innerHTML = details.vote_average ? `⭐ ${details.vote_average.toFixed(1)} (${details.vote_count})` : '—';
+
+      // Videos — pick YouTube trailer(s)
+      const yt = (videos.results || []).filter(v=> v.site === 'YouTube');
+      if(yt.length){
+        modalVideos.innerHTML = yt.map(v=>`<div style="margin-top:8px"><strong>${v.type} — ${v.name}</strong><div style="margin-top:6px"><iframe src="https://www.youtube.com/embed/${v.key}" allowfullscreen loading="lazy"></iframe></div></div>`).join('');
+      }
+
+      // Similar
+      if((similar.results || []).length){
+        modalSimilar.innerHTML = similar.results.slice(0,10).map(s=>{
+          const img = s.poster_path ? IMG_BASE + s.poster_path : '';
+          return `<div class="mini" data-media="${media}" data-id="${s.id}"><img class="poster" src="${img}" loading="lazy" style="height:160px;border-radius:8px"/><div style="font-size:13px">${s.title||s.name}</div></div>`
+        }).join('');
+        modalSimilar.querySelectorAll('.mini').forEach(el=> el.addEventListener('click', ()=> openDetails(el.dataset.media, el.dataset.id)));
+      }
+
+    }catch(e){
+      modalTitle.textContent = 'Failed to load details';
+      console.error(e);
+    }
+  }
+
+  // close modal
+  closeModal.addEventListener('click', ()=> modal.classList.remove('open'));
+  modal.addEventListener('click', (e)=>{ if(e.target===modal) modal.classList.remove('open') });
+
+  // debounce helper
+  function debounce(fn, wait=350){ let t; return (...args)=>{ clearTimeout(t); t = setTimeout(()=> fn(...args), wait) } }
+
+  // events
+  searchEl.addEventListener('input', debounce((e)=>{
+    currentQuery = e.target.value.trim();
+    currentPage = 1;
+    loadResults(1);
+  }, 450));
+
+  genreSelect.addEventListener('change', (e)=>{ currentGenre = e.target.value; currentPage = 1; loadResults(1); });
+  mediaTypeSelect.addEventListener('change', (e)=>{ currentMedia = e.target.value; loadGenres(currentMedia); currentPage =1; currentQuery=''; searchEl.value=''; loadResults(1); });
+  clearBtn.addEventListener('click', ()=>{ searchEl.value=''; currentQuery=''; currentGenre=''; genreSelect.value=''; loadResults(1); });
+
+  // initial load
+  (async function init(){
+    await loadGenres(currentMedia);
+    await loadResults(1);
+  })();
+
+  /*
+    Optional: Simple Node/Express proxy to hide your API key (example)
+
+    const express = require('express');
+    const fetch = require('node-fetch');
+    const app = express();
+    const KEY = process.env.TMDB_API_KEY; // store in env var
+    app.get('/proxy/*', async (req, res) => {
+      const path = req.params[0]; // e.g. movie/123
+      const qp = new URL(req.url, 'http://example.com').searchParams; // forward other params
+      qp.set('api_key', KEY);
+      const url = `https://api.themoviedb.org/3/${path}?${qp.toString()}`;
+      const response = await fetch(url);
+      const body = await response.text();
+      res.set('content-type', response.headers.get('content-type'));
+      res.status(response.status).send(body);
+    });
+    app.listen(3000);
+
+    Then change API_BASE on the client to your proxy endpoint, and remove the API key from client code.
+  */
+  </script>
+</body>
+</html>
