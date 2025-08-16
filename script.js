@@ -1,4 +1,4 @@
-const API_KEY = '/netlify/functions/tmdb';
+const API_KEY = './netlify/functions/tmdb';
 const API_BASE = 'https://api.themoviedb.org/3';
 const IMG_BASE = 'https://image.tmdb.org/t/p/w500';
 
@@ -288,4 +288,5 @@ async function init() {
 }
 
 init();
+
 
