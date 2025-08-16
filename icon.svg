@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="43.387318"
+   height="43.387314"
+   viewBox="0 0 43.387318 43.387314"
+   version="1.1"
+   id="svg1"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="px" />
+  <defs
+     id="defs1">
+    <linearGradient
+       id="linearGradient1"
+       inkscape:collect="always">
+      <stop
+         style="stop-color:#002dcb;stop-opacity:1;"
+         offset="0"
+         id="stop1" />
+      <stop
+         style="stop-color:#ff00af;stop-opacity:1;"
+         offset="1"
+         id="stop2" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient1"
+       id="linearGradient2"
+       x1="1.8240912"
+       y1="2.8338568"
+       x2="46.318886"
+       y2="46.612045"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(-1.7589449,-3.9087658)" />
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3">
+      <circle
+         style="fill:#3c3c3c;stroke-width:2.51339"
+         id="circle3"
+         cx="24.136637"
+         cy="24.657803"
+         r="18.8598" />
+    </clipPath>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-2.4755538,-2.0846739)">
+    <g
+       id="g3">
+      <rect
+         style="fill:url(#linearGradient2);stroke-width:2.51339"
+         id="rect1"
+         width="44.625092"
+         height="41.954094"
+         x="2.1498222"
+         y="3.1270142"
+         clip-path="url(#clipPath3)"
+         transform="matrix(1.1502591,0,0,1.1502591,-3.5941754,-4.5845309)" />
+      <text
+         xml:space="preserve"
+         style="font-size:26.8741px;fill:#ffffff;fill-opacity:1;stroke-width:5.62877"
+         x="7.6027575"
+         y="33.941128"
+         id="text3"><tspan
+           sodipodi:role="line"
+           id="tspan3"
+           x="7.6027575"
+           y="33.941128"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:condensed;font-size:26.8741px;font-family:Arial;-inkscape-font-specification:'Arial, Condensed';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#ffffff;fill-opacity:1;stroke-width:5.62877">MP</tspan></text>
+    </g>
+  </g>
+</svg>
